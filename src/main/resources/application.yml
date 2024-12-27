@@ -1,0 +1,36 @@
+spring:
+  output:
+    ansi:
+      enabled: always
+
+  datasource:
+    url: "${DATABASE_URL}"
+    username: "${DATABASE_USERNAME}"
+    password: "${DATABASE_PASSWORD}"
+    driver-class-name: org.mariadb.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+    open-in-view: false
+
+springdoc:
+  packages-to-scan: com.checkmate
+  default-consumes-media-type: application/json;charset=UTF-8
+  default-produces-media-type: application/json;charset=UTF-8
+  swagger-ui:
+    disable-swagger-default-url: true
+    path: /api-docs.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /api-docs/json
+    groups:
+      enabled: true
+  cache:
+    disabled: true
