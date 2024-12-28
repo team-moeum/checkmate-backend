@@ -34,7 +34,7 @@ jobs:
 
       - name: Download swagger JSON
         run: |
-          curl http://localhost:8080/v3/api-docs > swagger.json
+          curl -f http://localhost:8080/api-docs/json > swagger.json || exit 1
 
       - name: Stop container
         if: always()
