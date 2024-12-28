@@ -27,9 +27,9 @@ jobs:
 
           # 2. 이미지 빌드
           docker build \
-          --build-arg DATABASE_URL=${{ env.DATABASE_URL }} \
-          --build-arg DATABASE_USERNAME=${{ env.DATABASE_USERNAME }} \
-          --build-arg DATABASE_PASSWORD=${{ env.DATABASE_PASSWORD }} \
+          --build-arg DATABASE_URL=${DATABASE_URL} \
+          --build-arg DATABASE_USERNAME=${DATABASE_USERNAME} \
+          --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
           -t swagger .
 
           # 3. 컨테이너 실행 및 로그 확인
