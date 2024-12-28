@@ -15,11 +15,10 @@ env:
 
 jobs:
   generate-swagger:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
-      - name: Checkout source repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build and run application container
         run: |
@@ -37,83 +36,43 @@ jobs:
           echo "Waiting for application to start (30 seconds)..."
           sleep 30
 
+      - name: Build and run application container
+        run: |
+          docker build \
+            --build-arg DATABASE_URL=${DATABASE_URL} \
+            --build-arg DATABASE_USERNAME=${DATABASE_USERNAME} \
+            --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
+            -t swagger .
+
+          docker run -d -p 8081:8080 --name ${{ env.SERVICE_NAME }} swagger
+
+          echo "Docker container status:"
+          docker ps
+
+          echo "Waiting for application to start..."
+          timeout 60 bash -c 'until curl -s http://localhost:8081/api-docs/json > /dev/null; do sleep 2; done'
+
       - name: Test different endpoints
         run: |
-          # 컨테이너 IP 가져오기
-          CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ env.SERVICE_NAME }})
-          echo "container IP: $CONTAINER_IP"
-
-          # 성공한 URL을 저장할 변수
-          SUCCESS_URL=""
-
-          echo "Testing with localhost..."
-          echo "1. Testing /api-docs/json"
-          if curl -s -f http://localhost:8080/api-docs/json > /dev/null; then
-            SUCCESS_URL="http://localhost:8080/api-docs/json"
+          # 테스트할 URL을 8081 포트로 수정
+          if curl -s -f http://localhost:8081/api-docs/json > /dev/null; then
+            SUCCESS_URL="http://localhost:8081/api-docs/json"
             echo "Success with /api-docs/json"
-          fi
-
-          echo "2. Testing /v3/api-docs/json"
-          if [ -z "$SUCCESS_URL" ] && curl -s -f http://localhost:8080/v3/api-docs/json > /dev/null; then
-            SUCCESS_URL="http://localhost:8080/v3/api-docs/json"
-            echo "Success with /v3/api-docs/json"
-          fi
-
-          echo "3. Testing /v3/api-docs"
-          if [ -z "$SUCCESS_URL" ] && curl -s -f http://localhost:8080/v3/api-docs > /dev/null; then
-            SUCCESS_URL="http://localhost:8080/v3/api-docs"
-            echo "Success with /v3/api-docs"
-          fi
-
-          echo "4. Testing /api-docs"
-          if [ -z "$SUCCESS_URL" ] && curl -s -f http://localhost:8080/api-docs > /dev/null; then
-            SUCCESS_URL="http://localhost:8080/api-docs"
-            echo "Success with /api-docs"
-          fi
-
-          if [ ! -z "$CONTAINER_IP" ]; then
-            echo "Testing with container IP: $CONTAINER_IP"
-            echo "5. Testing /api-docs/json with container IP"
-            if [ -z "$SUCCESS_URL" ] && curl -s -f http://${CONTAINER_IP}:8080/api-docs/json > /dev/null; then
-              SUCCESS_URL="http://${CONTAINER_IP}:8080/api-docs/json"
-              echo "Success with container IP /api-docs/json"
-            fi
-            
-            echo "6. Testing /v3/api-docs/json with container IP"
-            if [ -z "$SUCCESS_URL" ] && curl -s -f http://${CONTAINER_IP}:8080/v3/api-docs/json > /dev/null; then
-              SUCCESS_URL="http://${CONTAINER_IP}:8080/v3/api-docs/json"
-              echo "Success with container IP /v3/api-docs/json"
-            fi
-
-            echo "7. Testing /v3/api-docs with container IP"
-            if [ -z "$SUCCESS_URL" ] && curl -s -f http://${CONTAINER_IP}:8080/v3/api-docs > /dev/null; then
-              SUCCESS_URL="http://${CONTAINER_IP}:8080/v3/api-docs"
-              echo "Success with container IP /v3/api-docs"
-            fi
-
-            echo "8. Testing /api-docs with container IP"
-            if [ -z "$SUCCESS_URL" ] && curl -s -f http://${CONTAINER_IP}:8080/api-docs > /dev/null; then
-              SUCCESS_URL="http://${CONTAINER_IP}:8080/api-docs"
-              echo "Success with container IP /api-docs"
-            fi
-          fi
-
-          # 성공한 URL 저장
-          echo "SWAGGER_URL=$SUCCESS_URL"
-          if [ -z "$SWAGGER_URL" ]; then
-            echo "No successful endpoint found"
+            curl -f $SUCCESS_URL > swagger.json
+          else
+            echo "Failed to access API docs"
             exit 1
           fi
 
-          echo "Downloading from successful endpoint: $SWAGGER_URL"
-          curl -f $SWAGGER_URL > swagger.json
-
-      - name: Stop container
+      - name: Cleanup container
         if: always()
-        run: docker stop ${{ env.SERVICE_NAME }} || true
+        run: |
+          docker stop ${{ env.SERVICE_NAME }}
+          docker rm ${{ env.SERVICE_NAME }}
+          docker rmi swagger
 
       - name: Checkout target repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: ${{ env.TARGET_REPO }}
           token: ${{ env.PERSONAL_ACCESS_TOKEN }}
