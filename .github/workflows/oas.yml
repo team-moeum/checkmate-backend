@@ -36,11 +36,42 @@ jobs:
           docker logs ${{ env.SERVICE_NAME }}
 
           echo "Waiting for application to start (60 seconds)..."
-          sleep 60
+          sleep 30
+
+      - name: Test different endpoints
+        run: |
+          # 컨테이너 IP 가져오기
+          CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ env.SERVICE_NAME }})
+
+          echo "Testing with localhost..."
+          echo "1. Testing /api-docs/json"
+          curl -v http://localhost:8080/api-docs/json
+
+          echo "2. Testing /v3/api-docs/json"
+          curl -v http://localhost:8080/v3/api-docs/json
+
+          echo "3. Testing /v3/api-docs"
+          curl -v http://localhost:8080/v3/api-docs
+
+          echo "4. Testing /api-docs"
+          curl -v http://localhost:8080/api-docs
+
+          if [ ! -z "$CONTAINER_IP" ]; then
+            echo "Testing with container IP: $CONTAINER_IP"
+            echo "1. Testing /api-docs/json with container IP"
+            curl -v http://${CONTAINER_IP}:8080/api-docs/json
+            
+            echo "2. Testing /v3/api-docs/json with container IP"
+            curl -v http://${CONTAINER_IP}:8080/v3/api-docs/json
+          fi
 
       - name: Download swagger JSON
         run: |
-          curl -v http://localhost:8080/v3/api-docs/json > swagger.json
+          # 성공한 엔드포인트로 최종 다운로드
+          curl -f http://localhost:8080/api-docs/json > swagger.json || \
+          curl -f http://localhost:8080/v3/api-docs/json > swagger.json || \
+          curl -f http://localhost:8080/v3/api-docs > swagger.json || \
+          curl -f http://localhost:8080/api-docs > swagger.json
 
       - name: Stop container
         if: always()
