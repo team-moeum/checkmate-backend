@@ -38,12 +38,15 @@ jobs:
             -p 8080:8080 \
             --name ${{ env.SERVICE_NAME }} swagger
 
-          # 4. 애플리케이션 시작 대기 및 API 테스트
+          # 4. 애플리케이션 시작 대기 및 로그 확인
           echo "Waiting for application to start..."
           sleep 10
+          echo "Container logs:"
+          docker logs ${{ env.SERVICE_NAME }}
+          sleep 20
 
-          # 5. 컨테이너 내부에서 API 호출
-          docker exec ${{ env.SERVICE_NAME }} curl -s http://localhost:8080/api-docs/json > swagger.json
+          # 5. 호스트에서 API 호출
+          curl -s http://localhost:8080/api-docs/json > swagger.json
 
           if [ -s swagger.json ]; then
             echo "Successfully retrieved swagger.json"
