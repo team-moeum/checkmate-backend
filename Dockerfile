@@ -16,6 +16,14 @@ RUN chmod +x gradlew && ./gradlew clean build --no-daemon -x test
 FROM openjdk:17-alpine
 WORKDIR /app2
 
+ARG DATABASE_URL
+ARG DATABASE_USERNAME
+ARG DATABASE_PASSWORD
+
+ENV DATABASE_URL=${DATABASE_URL}
+ENV DATABASE_USERNAME=${DATABASE_USERNAME}
+ENV DATABASE_PASSWORD=${DATABASE_PASSWORD}
+
 ENV TZ=Asia/Seoul
 RUN apk update && apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/$TZ /etc/localtime && \
