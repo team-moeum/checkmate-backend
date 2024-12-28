@@ -26,6 +26,6 @@ RUN mkdir -p /app2/logs
 # JAR 파일 복사 경로 수정
 COPY --from=builder /app2/build/libs/*.jar /app2/app.jar
 
-EXPOSE 8080
+EXPOSE 8081
 
 ENTRYPOINT ["java", "-jar", "/app2/app.jar"]
