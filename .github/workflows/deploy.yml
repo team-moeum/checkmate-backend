@@ -54,7 +54,7 @@ jobs:
           username: ubuntu
           key: ${{ env.EC2_SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/app2
+            cd /home/ubuntu/checkmate
             aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID }}
             aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY }}
             aws configure set region ${{ env.AWS_REGION }}
