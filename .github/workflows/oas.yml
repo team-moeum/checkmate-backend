@@ -33,9 +33,6 @@ jobs:
           echo "Docker container status:"
           docker ps
 
-          echo "Waiting for application to start..."
-          timeout 60 bash -c 'until curl -s http://localhost:8081/api-docs/json > /dev/null; do sleep 2; done'
-
       - name: Test different endpoints
         run: |
           # 테스트할 URL을 8081 포트로 수정
