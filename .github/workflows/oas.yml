@@ -41,6 +41,7 @@ jobs:
         run: |
           # 컨테이너 IP 가져오기
           CONTAINER_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${{ env.SERVICE_NAME }})
+          echo "container IP: $CONTAINER_IP"
 
           # 성공한 URL을 저장할 변수
           SUCCESS_URL=""
@@ -98,14 +99,12 @@ jobs:
           fi
 
           # 성공한 URL 저장
-          echo "SWAGGER_URL=$SUCCESS_URL" >> $GITHUB_ENV
-
-      - name: Download swagger JSON
-        run: |
+          echo "SWAGGER_URL=$SUCCESS_URL"
           if [ -z "$SWAGGER_URL" ]; then
             echo "No successful endpoint found"
             exit 1
           fi
+
           echo "Downloading from successful endpoint: $SWAGGER_URL"
           curl -f $SWAGGER_URL > swagger.json
 
