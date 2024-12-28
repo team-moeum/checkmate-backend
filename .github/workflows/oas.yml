@@ -33,41 +33,36 @@ jobs:
           -t swagger .
 
           # 3. 컨테이너 실행 및 로그 확인
-          docker run -d \
+          docker run \
             --network swagger-net \
             -p 8080:8080 \
             --name ${{ env.SERVICE_NAME }} swagger
 
-          # 4. 컨테이너 상태 확인
-          echo "Container status:"
-          docker ps -a
-
-          # 5. 즉시 로그 확인
-          echo "Initial container logs:"
-          docker logs ${{ env.SERVICE_NAME }}
-
-          # 6. 애플리케이션 시작 대기
-          echo "Waiting for application to start..."
-          sleep 30
-
-          # 7. 30초 후 로그 재확인
-          echo "Container logs after 30 seconds:"
-          docker logs ${{ env.SERVICE_NAME }}
-
-          # 8. curl 테스트 전 컨테이너 상태 재확인
-          echo "Container status before curl:"
-          docker ps -a | grep ${{ env.SERVICE_NAME }}
+          # 4. Spring Boot 애플리케이션 로그 확인
+          echo "Waiting for application startup..."
+          for i in {1..12}; do
+            echo "Check $i of 12"
+            docker logs ${{ env.SERVICE_NAME }}
+            if docker logs ${{ env.SERVICE_NAME }} 2>&1 | grep -q "Started"; then
+              echo "Application started successfully"
+              break
+            fi
+            sleep 10
+          done
 
           # 9. API 테스트
-          curl -v http://localhost:8080/api-docs/json > swagger.json
+          echo "Testing API endpoint..."
+          for i in {1..5}; do
+            echo "Attempt $i of 5"
+            if curl -v -f http://localhost:8080/api-docs/json > swagger.json; then
+              echo "Successfully retrieved swagger.json"
+              break
+            fi
+            sleep 5
+          done
 
-          if [ -s swagger.json ]; then
-            echo "Successfully retrieved swagger.json"
-            echo "Content of swagger.json:"
-            cat swagger.json
-          else
-            echo "Failed to get swagger.json"
-            echo "Final container logs:"
+          if [ ! -s swagger.json ]; then
+            echo "Failed to retrieve swagger.json after 5 attempts"
             docker logs ${{ env.SERVICE_NAME }}
             exit 1
           fi
