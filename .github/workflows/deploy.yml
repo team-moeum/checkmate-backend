@@ -1,7 +1,7 @@
 name: Deployment
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY:  새로 만들 ECR 레포명
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
   EC2_HOST: ${{ secrets.EC2_HOST }}
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -19,7 +19,7 @@ on:
 
 jobs:
   Deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
 
@@ -54,7 +54,7 @@ jobs:
           username: ubuntu
           key: ${{ env.EC2_SSH_PRIVATE_KEY }}
           script: |
-            cd /home/ubuntu/새로 생성할 폴더명
+            cd /home/ubuntu/app2
             aws configure set aws_access_key_id ${{ env.AWS_ACCESS_KEY_ID }}
             aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY }}
             aws configure set region ${{ env.AWS_REGION }}

@@ -1,6 +1,5 @@
 FROM openjdk:17-alpine AS builder
-WORKDIR /app
-
+WORKDIR /app2
 
 ARG DATABASE_URL
 ARG DATABASE_USERNAME
@@ -15,17 +14,18 @@ COPY . .
 RUN chmod +x gradlew && ./gradlew clean build --no-daemon -x test
 
 FROM openjdk:17-alpine
-WORKDIR /app
+WORKDIR /app2
 
 ENV TZ=Asia/Seoul
 RUN apk update && apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
-RUN mkdir -p /app/logs
+RUN mkdir -p /app2/logs
 
-COPY --from=builder /app/build/libs/*.jar /app/app.jar
+# JAR 파일 복사 경로 수정
+COPY --from=builder /app2/build/libs/*.jar /app2/app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["java","-jar","/app/app.jar"]
+ENTRYPOINT ["java", "-jar", "/app2/app.jar"]
