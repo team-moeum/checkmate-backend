@@ -28,9 +28,15 @@ jobs:
             --build-arg DATABASE_USERNAME=${DATABASE_USERNAME} \
             --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
             -t swagger .
-          docker run -d -p 8080:8080 --name ${{ env.SERVICE_NAME }} swagger
-          echo "Waiting for application to start..."
-          sleep 30
+
+          docker run -d --network host --name ${{ env.SERVICE_NAME }} swagger
+
+          echo "Docker container status:"
+          docker ps
+          docker logs ${{ env.SERVICE_NAME }}
+
+          echo "Waiting for application to start (60 seconds)..."
+          sleep 60
 
       - name: Download swagger JSON
         run: |
