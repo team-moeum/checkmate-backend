@@ -28,14 +28,13 @@ jobs:
             --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
             -t swagger .
 
-          docker run -d -p 8081:8080 --name ${{ env.SERVICE_NAME }} swagger
+          docker run -d --network host --name ${{ env.SERVICE_NAME }} swagger
 
           echo "Docker container status:"
           docker ps
 
       - name: Test different endpoints
         run: |
-          # 테스트할 URL을 8081 포트로 수정
           if curl -s -f http://localhost:8081/api-docs/json > /dev/null; then
             SUCCESS_URL="http://localhost:8081/api-docs/json"
             echo "Success with /api-docs/json"
