@@ -20,27 +20,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and run application container
+      - name: Build and test swagger
         run: |
+          # 1. Docker 네트워크 생성
+          docker network create swagger-net
+
+          # 2. 이미지 빌드
           docker build \
             --build-arg DATABASE_URL=${DATABASE_URL} \
             --build-arg DATABASE_USERNAME=${DATABASE_USERNAME} \
             --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
             -t swagger .
 
-          docker run -d --network host --name ${{ env.SERVICE_NAME }} swagger
+          # 3. 컨테이너 실행
+          docker run -d \
+            --network swagger-net \
+            -p 8080:8080 \
+            --name ${{ env.SERVICE_NAME }} swagger
 
-          echo "Docker container status:"
-          docker ps
+          # 4. 애플리케이션 시작 대기 및 API 테스트
+          echo "Waiting for application to start..."
+          sleep 10
 
-      - name: Test different endpoints
-        run: |
-          if curl -s -f http://localhost:8081/api-docs/json > /dev/null; then
-            SUCCESS_URL="http://localhost:8081/api-docs/json"
-            echo "Success with /api-docs/json"
-            curl -f $SUCCESS_URL > swagger.json
+          # 5. 컨테이너 내부에서 API 호출
+          docker exec ${{ env.SERVICE_NAME }} curl -s http://localhost:8080/api-docs/json > swagger.json
+
+          if [ -s swagger.json ]; then
+            echo "Successfully retrieved swagger.json"
           else
-            echo "Failed to access API docs"
+            echo "Failed to get swagger.json"
+            docker logs ${{ env.SERVICE_NAME }}
             exit 1
           fi
 
