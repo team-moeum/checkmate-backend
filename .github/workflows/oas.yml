@@ -7,7 +7,7 @@ env:
   TARGET_REPO: team-moeum/checkmate-frontend
   TARGET_BRANCH: main
   SOURCE_BRANCH: oas-${{ github.run_number }}-${{ github.run_attempt }}
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
   DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
   DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
   SERVICE_NAME: checkmate-backend-docs
