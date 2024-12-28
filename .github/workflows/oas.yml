@@ -27,31 +27,47 @@ jobs:
 
           # 2. 이미지 빌드
           docker build \
-          --build-arg DATABASE_URL=${DATABASE_URL} \
-          --build-arg DATABASE_USERNAME=${DATABASE_USERNAME} \
-          --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
+          --build-arg DATABASE_URL=${{ env.DATABASE_URL }} \
+          --build-arg DATABASE_USERNAME=${{ env.DATABASE_USERNAME }} \
+          --build-arg DATABASE_PASSWORD=${{ env.DATABASE_PASSWORD }} \
           -t swagger .
 
-          # 3. 컨테이너 실행
+          # 3. 컨테이너 실행 및 로그 확인
           docker run -d \
             --network swagger-net \
             -p 8080:8080 \
             --name ${{ env.SERVICE_NAME }} swagger
 
-          # 4. 애플리케이션 시작 대기 및 로그 확인
-          echo "Waiting for application to start..."
-          sleep 10
-          echo "Container logs:"
-          docker logs ${{ env.SERVICE_NAME }}
-          sleep 20
+          # 4. 컨테이너 상태 확인
+          echo "Container status:"
+          docker ps -a
 
-          # 5. 호스트에서 API 호출
-          curl -s http://localhost:8080/api-docs/json > swagger.json
+          # 5. 즉시 로그 확인
+          echo "Initial container logs:"
+          docker logs ${{ env.SERVICE_NAME }}
+
+          # 6. 애플리케이션 시작 대기
+          echo "Waiting for application to start..."
+          sleep 30
+
+          # 7. 30초 후 로그 재확인
+          echo "Container logs after 30 seconds:"
+          docker logs ${{ env.SERVICE_NAME }}
+
+          # 8. curl 테스트 전 컨테이너 상태 재확인
+          echo "Container status before curl:"
+          docker ps -a | grep ${{ env.SERVICE_NAME }}
+
+          # 9. API 테스트
+          curl -v http://localhost:8080/api-docs/json > swagger.json
 
           if [ -s swagger.json ]; then
             echo "Successfully retrieved swagger.json"
+            echo "Content of swagger.json:"
+            cat swagger.json
           else
             echo "Failed to get swagger.json"
+            echo "Final container logs:"
             docker logs ${{ env.SERVICE_NAME }}
             exit 1
           fi
