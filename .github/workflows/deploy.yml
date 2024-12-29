@@ -27,6 +27,7 @@ jobs:
 
   ConfigureAWS:
     runs-on: self-hosted
+    needs: Checkout
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -35,21 +36,19 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-  LoginToECR:
+
+  LoginAndBuildImage:
     runs-on: self-hosted
-    outputs:
-      registry: ${{ steps.login-ecr.outputs.registry }}
+    needs: ConfigureAWS
     steps:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-  BuildAndPushImage:
-    runs-on: self-hosted
-    steps:
       - name: Build, tag, and push image to Amazon ECR
+        id: build-image
         env:
-          ECR_REGISTRY: ${{ needs.LoginToECR.outputs.registry }}
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker build \
           --build-arg DATABASE_URL=${DATABASE_URL} \
@@ -61,6 +60,7 @@ jobs:
 
   DeployToEC2:
     runs-on: self-hosted
+    needs: LoginAndBuildImage
     steps:
       - name: Deploy on EC2 instance
         uses: appleboy/ssh-action@v0.1.6
