@@ -1,5 +1,5 @@
 FROM openjdk:17-alpine AS builder
-WORKDIR /app2
+WORKDIR /home/ubuntu/app2
 
 ARG DATABASE_URL
 ARG DATABASE_USERNAME
@@ -21,10 +21,10 @@ RUN apk update && apk add --no-cache tzdata && \
     cp /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
-RUN mkdir -p /app2/logs
+RUN mkdir -p /home/ubuntu/app2/logs
 
 # JAR 파일 복사 경로 수정
-COPY --from=builder /app2/build/libs/*.jar /app2/app.jar
+COPY --from=builder /home/ubuntu/app2/build/libs/*.jar /home/ubuntu/app2/app.jar
 
 EXPOSE 8080
 
