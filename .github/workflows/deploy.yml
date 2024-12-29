@@ -51,9 +51,6 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
           docker build \
-          --build-arg DATABASE_URL=${DATABASE_URL} \
-          --build-arg DATABASE_USERNAME=${DATABASE_USERNAME} \
-          --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest"
@@ -62,6 +59,24 @@ jobs:
     runs-on: self-hosted
     needs: LoginAndBuildImage
     steps:
+      - name: Fill out .env file
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ env.EC2_HOST }}
+          username: ubuntu
+          key: ${{ env.EC2_SSH_PRIVATE_KEY }}
+          script: |
+            cd /home/ubuntu/checkmate
+            
+            if [ -f .env ]; then
+                echo ".env 파일이 존재하므로 삭제합니다."
+                rm -f .env
+            fi
+            
+            echo "DATABASE_URL=${{ env.DATABASE_URL }}" >> .env
+            echo "DATABASE_USERNAME=${{ env.DATABASE_USERNAME }}" >> .env
+            echo "DATABASE_PASSWORD=${{ env.DATABASE_PASSWORD }}" >> .env
+
       - name: Deploy on EC2 instance
         uses: appleboy/ssh-action@v0.1.6
         with:
