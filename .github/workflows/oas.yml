@@ -40,8 +40,8 @@ jobs:
           git config --local user.name "moeum[bot]"
 
           git checkout -b ${{ env.SOURCE_BRANCH }}
-          cp ../swagger.json ./swagger.json
-          git add swagger.json
+          cp ../swagger.json ./docs/api-doc.json
+          git add docs/api-doc.json
           git commit -m "Update swagger.json"
           git push origin ${{ env.SOURCE_BRANCH }}
 
