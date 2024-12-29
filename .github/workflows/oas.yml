@@ -7,10 +7,7 @@ env:
   TARGET_REPO: team-moeum/checkmate-frontend
   TARGET_BRANCH: main
   SOURCE_BRANCH: oas-${{ github.run_number }}-${{ github.run_attempt }}
-  DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-  DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-  DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-  SERVICE_NAME: checkmate-backend-docs
+  API_DOCS_URL: ${{ secrets.API_DOCS_URL }}
   PERSONAL_ACCESS_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
 
 jobs:
@@ -20,59 +17,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build and test swagger
+      - name: Get Swagger JSON
         run: |
-          # 1. Docker 네트워크 생성
-          docker network create swagger-net
-
-          # 2. 이미지 빌드
-          docker build \
-          --build-arg DATABASE_URL=${DATABASE_URL} \
-          --build-arg DATABASE_USERNAME=${DATABASE_USERNAME} \
-          --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
-          -t swagger .
-
-          # 3. 컨테이너 실행 및 로그 확인
-          docker run \
-            --network swagger-net \
-            -p 8080:8080 \
-            --name ${{ env.SERVICE_NAME }} swagger
-
-          # 4. Spring Boot 애플리케이션 로그 확인
-          echo "Waiting for application startup..."
-          for i in {1..12}; do
-            echo "Check $i of 12"
-            docker logs ${{ env.SERVICE_NAME }}
-            if docker logs ${{ env.SERVICE_NAME }} 2>&1 | grep -q "Started"; then
-              echo "Application started successfully"
-              break
-            fi
-            sleep 10
-          done
-
-          # 9. API 테스트
-          echo "Testing API endpoint..."
-          for i in {1..5}; do
-            echo "Attempt $i of 5"
-            if curl -v -f http://localhost:8080/api-docs/json > swagger.json; then
-              echo "Successfully retrieved swagger.json"
-              break
-            fi
-            sleep 5
-          done
-
+          curl -f ${{ env.API_DOCS_URL }} > swagger.json
           if [ ! -s swagger.json ]; then
-            echo "Failed to retrieve swagger.json after 5 attempts"
-            docker logs ${{ env.SERVICE_NAME }}
+            echo "Failed to retrieve swagger.json"
             exit 1
           fi
-
-      - name: Cleanup container
-        if: always()
-        run: |
-          docker stop ${{ env.SERVICE_NAME }}
-          docker rm ${{ env.SERVICE_NAME }}
-          docker rmi swagger
+          echo "Successfully retrieved swagger.json"
 
       - name: Checkout target repository
         uses: actions/checkout@v4
