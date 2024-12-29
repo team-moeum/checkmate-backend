@@ -34,3 +34,6 @@ springdoc:
       enabled: true
   cache:
     disabled: true
+
+server:
+  port: 8090
