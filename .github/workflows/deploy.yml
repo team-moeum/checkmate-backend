@@ -1,4 +1,5 @@
 name: Deployment
+
 env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
@@ -18,11 +19,15 @@ on:
       - develop
 
 jobs:
-  Deploy:
+  Checkout:
     runs-on: self-hosted
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+  ConfigureAWS:
+    runs-on: self-hosted
+    steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -30,12 +35,17 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
+  LoginToECR:
+    runs-on: self-hosted
+    id: login-ecr
+    steps:
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+  BuildAndPushImage:
+    runs-on: self-hosted
+    steps:
       - name: Build, tag, and push image to Amazon ECR
-        id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
@@ -45,8 +55,11 @@ jobs:
           --build-arg DATABASE_PASSWORD=${DATABASE_PASSWORD} \
           -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest"  
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest"
 
+  DeployToEC2:
+    runs-on: self-hosted
+    steps:
       - name: Deploy on EC2 instance
         uses: appleboy/ssh-action@v0.1.6
         with:
@@ -59,7 +72,7 @@ jobs:
             aws configure set aws_secret_access_key ${{ env.AWS_SECRET_ACCESS_KEY }}
             aws configure set region ${{ env.AWS_REGION }}
             ECR_REGISTRY_LOGIN=$(aws ecr get-login-password --region ${{ env.AWS_REGION }} | sudo docker login --username AWS --password-stdin ${{ env.ECR_REGISTRY }})
-            sudo docker-compose stop ${{ env.SERVICE_NAME }}
-            sudo docker-compose rm -f ${{ env.SERVICE_NAME }}
+            sudo docker-compose stop ${{ env.SERVICE_NAME }} || true
+            sudo docker-compose rm -f ${{ env.SERVICE_NAME }} || true
             sudo docker-compose pull ${{ env.SERVICE_NAME }}
             sudo docker-compose up -d ${{ env.SERVICE_NAME }}
