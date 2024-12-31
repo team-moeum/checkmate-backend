@@ -11,11 +11,6 @@ env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}
   DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
   DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
-  SERVICE_NAME: checkmate-backend
-  BEANSTALK_APP_NAME: checkmate-beanstalk
-  BEANSTALK_ENV_NAME: checkmate-beanstalk
-  BEANSTALK_ENV_ID: e-gpj5ps4yge
-  S3_BUCKET_NAME: elasticbeanstalk-ap-northeast-2-590184119285
 
 on:
   push:
@@ -55,26 +50,3 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_ENV
-
-  DeployToElasticBeanstalk:
-    runs-on: self-hosted
-    needs: LoginAndBuildImage
-    steps:
-      - name: Upload application version to S3
-        run: |
-          VERSION_LABEL="app-$(date +%Y%m%d%H%M%S)"
-          ZIP_FILE="${{ env.SERVICE_NAME }}-${VERSION_LABEL}.zip"
-          zip -r $ZIP_FILE .
-          aws s3 cp $ZIP_FILE s3://$S3_BUCKET_NAME/$ZIP_FILE
-          echo "VERSION_LABEL=$VERSION_LABEL" >> $GITHUB_ENV
-
-      - name: Update Elastic Beanstalk environment
-        run: |
-          aws elasticbeanstalk create-application-version \
-            --application-name ${{ env.BEANSTALK_APP_NAME }} \
-            --version-label $VERSION_LABEL \
-            --source-bundle S3Bucket=$S3_BUCKET_NAME,S3Key=$ZIP_FILE
-
-          aws elasticbeanstalk update-environment \
-            --environment-name ${{ env.BEANSTALK_ENV_NAME }} \
-            --version-label $VERSION_LABEL
