@@ -3,6 +3,8 @@ WORKDIR /app
 
 COPY . .
 
+RUN sudo docker system prune -a
+
 RUN chmod +x gradlew && ./gradlew clean build --no-daemon -x test
 
 FROM openjdk:17-alpine
