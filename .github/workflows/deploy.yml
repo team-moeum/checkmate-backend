@@ -4,13 +4,11 @@ env:
   AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
   ECR_REGISTRY: ${{ secrets.ECR_REGISTRY }}
-  EC2_HOST: ${{ secrets.EC2_HOST }}
+  BEANSTALK_APP_NAME: beanstalk-checkmate
+  BEANSTALK_ENV_NAME: beanstalk-checkmate
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   EC2_SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
-  DATABASE_URL: ${{ secrets.DATABASE_URL }}
-  DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-  DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
 
 on:
   push:
@@ -51,7 +49,29 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_ENV
 
-      - name: run docker-compose
+  BeanstalkDeploy:
+    runs-on: self-hosted
+    needs: LoginAndBuildImage
+    steps:
+      - name: Prepare Deployment Package
         run: |
-            cd /home/ubuntu/checkmate
-            sudo docker compose up -d
+          mkdir -p deploy
+          echo "version: '3'" > deploy/docker-compose.yml
+          echo "services:" >> deploy/docker-compose.yml
+          echo "  app:" >> deploy/docker-compose.yml
+          echo "    image: $ECR_REGISTRY/$ECR_REPOSITORY:latest" >> deploy/docker-compose.yml
+          echo "    ports:" >> deploy/docker-compose.yml
+          echo "      - '8090:8090'" >> deploy/docker-compose.yml
+          cd deploy && zip -r deploy.zip .
+
+      - name: Deploy to Elastic Beanstalk
+        uses: einaregilsson/beanstalk-deploy@v14
+        with:
+          aws_access_key: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws_secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          application_name: ${{ env.BEANSTALK_APP_NAME }}
+          environment_name: ${{ env.BEANSTALK_ENV_NAME }}
+          version_label: docker-${{ github.sha }}
+          region: ${{ env.AWS_REGION }}
+          deployment_package: deploy/deploy.zip
+          wait_for_environment_recovery: 200
