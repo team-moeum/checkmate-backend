@@ -50,3 +50,8 @@ jobs:
           docker build --no-cache --pull -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_ENV
+
+      - name: run docker-compose
+        run: |
+            cd /home/ubuntu/checkmate
+            sudo docker compose up -d
