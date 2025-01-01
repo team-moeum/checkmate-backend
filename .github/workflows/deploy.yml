@@ -9,6 +9,9 @@ env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   EC2_SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_PRIVATE_KEY }}
+  DATABASE_URL: ${{ secrets.DATABASE_URL }}
+  DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+  DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
 
 on:
   push:
@@ -33,7 +36,6 @@ jobs:
           aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-
   LoginAndBuildImage:
     runs-on: self-hosted
     needs: ConfigureAWS
@@ -53,16 +55,37 @@ jobs:
     runs-on: self-hosted
     needs: LoginAndBuildImage
     steps:
-      - name: Prepare Deployment Package
+      - name: Prepare Docker Compose and .env files
         run: |
+          # Create deploy directory
           mkdir -p deploy
-          echo "version: '3'" > deploy/docker-compose.yml
-          echo "services:" >> deploy/docker-compose.yml
-          echo "  app:" >> deploy/docker-compose.yml
-          echo "    image: $ECR_REGISTRY/$ECR_REPOSITORY:latest" >> deploy/docker-compose.yml
-          echo "    ports:" >> deploy/docker-compose.yml
-          echo "      - '8090:8090'" >> deploy/docker-compose.yml
-          cd deploy && zip -r deploy.zip .
+
+          # Create docker-compose.yml file
+          cat <<EOL > deploy/docker-compose.yml
+          version: "3"
+          services:
+            checkmate-backend:
+              image: $ECR_REGISTRY/$ECR_REPOSITORY:latest
+              restart: unless-stopped
+              network_mode: host
+              env_file: ".env"
+              environment:
+                TZ: "Asia/Seoul"
+              volumes:
+                - /etc/localtime:/etc/localtime:ro
+                - /etc/timezone:/etc/timezone:ro
+                - /home/ubuntu/checkmate/applog:/app/logs
+            EOL
+            
+            # Create .env file
+            cat <<EOL > deploy/.env
+            DATABASE_URL=${{ secrets.DATABASE_URL }}
+            DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            EOL
+            
+            # Zip the deployment package
+            cd deploy && zip -r deploy.zip .
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v14
