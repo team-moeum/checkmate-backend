@@ -59,33 +59,22 @@ jobs:
         run: |
           # Create deploy directory
           mkdir -p deploy
-
-          # Create docker-compose.yml file
-          cat <<EOL > deploy/docker-compose.yml
-          version: "3"
-          services:
-            checkmate-backend:
-              image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
-              restart: unless-stopped
-              network_mode: host
-              env_file: ".env"
-              environment:
-                TZ: "Asia/Seoul"
-              volumes:
-                - /etc/localtime:/etc/localtime:ro
-                - /etc/timezone:/etc/timezone:ro
-                - /home/ubuntu/checkmate/applog:/app/logs
+          
+          # Create dockerrun.aws.json file with ECR repository URI
+          cat <<EOL > deploy/Dockerrun.aws.json
+          {
+            "AWSEBDockerrunVersion": 2,
+            "Image": {
+              "Name": "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest"
+              "Update": "true"
+            },
+            "Ports": [
+              {
+                "ContainerPort": "8090"
+              }
+            ]
+          }
           EOL
-
-          # Create .env file
-          cat <<EOL > deploy/.env
-          DATABASE_URL=${{ env.DATABASE_URL }}
-          DATABASE_USERNAME=${{ env.DATABASE_USERNAME }}
-          DATABASE_PASSWORD=${{ env.DATABASE_PASSWORD }}
-          EOL
-
-          # Zip the deployment package
-          cd deploy && zip -r deploy.zip .
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v14
