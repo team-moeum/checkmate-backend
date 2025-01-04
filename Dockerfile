@@ -9,7 +9,7 @@ FROM openjdk:17-alpine
 WORKDIR /app
 
 ENV TZ=Asia/Seoul
-RUN apk update && apk add --no-cache tzdata && \
+RUN apk update && apk add --no-cache tzdata gettext && \
     cp /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
