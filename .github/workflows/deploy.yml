@@ -75,6 +75,8 @@ jobs:
             ]
           }
           EOL
+          
+          zip -r deploy/deploy.zip deploy/
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v14
