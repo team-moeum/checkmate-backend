@@ -57,32 +57,26 @@ jobs:
     steps:
       - name: Create Dockerrun.aws.json
         run: |
-          echo '{
-            "AWSEBDockerrunVersion": 1,
-            "Image": {
-              "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest",
-              "Update": "true"
-            },
-            "environment": [
-              {
-                "name": "DATABASE_URL",
-                "value": "${DATABASE_URL}"
-              },
-              {
-                "name": "DATABASE_USERNAME",
-                "value": "${DATABASE_USERNAME}"
-              },
-              {
-                "name": "DATABASE_PASSWORD",
-                "value": "${DATABASE_PASSWORD}"
-              }
-            ],
-            "Ports": [
-              {
-                "ContainerPort": "8090"
-              }
-            ]
-          }' > Dockerrun.aws.json
+          echo 'version: "3"
+                services:
+                  checkmate-backend:
+                    image: 590184119285.dkr.ecr.ap-northeast-2.amazonaws.com/checkmate/backend:latest
+                    restart: unless-stopped
+                    network_mode: host
+                    env_file: ".env"
+                    environment:
+                      TZ: "Asia/Seoul"
+                    volumes:
+                      - /etc/localtime:/etc/localtime:ro
+                      - /etc/timezone:/etc/timezone:ro
+                      - /home/ubuntu/checkmate/applog:/app/logs
+                  ' > Dockerrun.aws.json
+
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=${DATABASE_URL}" > .env
+          echo "DATABASE_USERNAME=${DATABASE_USERNAME}" >> .env
+          echo "DATABASE_PASSWORD=${DATABASE_PASSWORD}" >> .env
 
       - name: Generate deployment package
         run: |
