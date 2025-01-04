@@ -1,0 +1,12 @@
+{
+  "AWSEBDockerrunVersion": 2,
+  "Image": {
+    "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest",
+    "Update": "true"
+  },
+  "Ports": [
+    {
+      "ContainerPort": "8090"
+    }
+  ]
+}
