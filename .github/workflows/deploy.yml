@@ -55,14 +55,9 @@ jobs:
     runs-on: self-hosted
     needs: LoginAndBuildImage
     steps:
-      - name: Prepare Docker Compose and .env files
+      - name: Create Dockerrun.aws.json
         run: |
-          # Create deploy directory
-          mkdir -p deploy
-          
-          # Generate Dockerrun.aws.json directly with environment variables
-          cat <<EOF > deploy/Dockerrun.aws.json
-          {
+          echo '{
             "AWSEBDockerrunVersion": 1,
             "Image": {
               "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest",
@@ -87,10 +82,14 @@ jobs:
                 "ContainerPort": "8090"
               }
             ]
-          }
-          EOF
-          
-          zip -r deploy/deploy.zip deploy/
+          }' > Dockerrun.aws.json
+
+      - name: Generate deployment package
+        run: |
+          mkdir -p deploy
+          cp Dockerrun.aws.json deploy/Dockerrun.aws.json
+          cp -r .ebextensions deploy/.ebextensions
+          cd deploy && zip -r deploy.zip .
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v14
