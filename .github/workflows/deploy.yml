@@ -65,7 +65,7 @@ jobs:
           version: "3"
           services:
             checkmate-backend:
-              image: $ECR_REGISTRY/$ECR_REPOSITORY:latest
+              image: ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest
               restart: unless-stopped
               network_mode: host
               env_file: ".env"
@@ -75,17 +75,17 @@ jobs:
                 - /etc/localtime:/etc/localtime:ro
                 - /etc/timezone:/etc/timezone:ro
                 - /home/ubuntu/checkmate/applog:/app/logs
-            EOL
-            
-            # Create .env file
-            cat <<EOL > deploy/.env
-            DATABASE_URL=${{ secrets.DATABASE_URL }}
-            DATABASE_USERNAME=${{ secrets.DATABASE_USERNAME }}
-            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
-            EOL
-            
-            # Zip the deployment package
-            cd deploy && zip -r deploy.zip .
+          EOL
+
+          # Create .env file
+          cat <<EOL > deploy/.env
+          DATABASE_URL=${{ env.DATABASE_URL }}
+          DATABASE_USERNAME=${{ env.DATABASE_USERNAME }}
+          DATABASE_PASSWORD=${{ env.DATABASE_PASSWORD }}
+          EOL
+
+          # Zip the deployment package
+          cd deploy && zip -r deploy.zip .
 
       - name: Deploy to Elastic Beanstalk
         uses: einaregilsson/beanstalk-deploy@v14
