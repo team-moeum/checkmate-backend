@@ -81,7 +81,7 @@ jobs:
       - name: Generate deployment package
         run: |
           mkdir -p deploy
-          cp Dockerrun.aws.json deploy/Dockerrun.aws.json
+          cp docker-compose.yml deploy/docker-compose.yml
           cd deploy && zip -r deploy.zip .
 
       - name: Deploy to Elastic Beanstalk
