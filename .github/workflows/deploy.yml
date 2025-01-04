@@ -60,7 +60,35 @@ jobs:
           # Create deploy directory
           mkdir -p deploy
           
-          envsubst < Dockerrun.aws.json.template > deploy/Dockerrun.aws.json
+          # Generate Dockerrun.aws.json directly with environment variables
+          cat <<EOF > deploy/Dockerrun.aws.json
+          {
+            "AWSEBDockerrunVersion": 1,
+            "Image": {
+              "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest",
+              "Update": "true"
+            },
+            "environment": [
+              {
+                "name": "DATABASE_URL",
+                "value": "${DATABASE_URL}"
+              },
+              {
+                "name": "DATABASE_USERNAME",
+                "value": "${DATABASE_USERNAME}"
+              },
+              {
+                "name": "DATABASE_PASSWORD",
+                "value": "${DATABASE_PASSWORD}"
+              }
+            ],
+            "Ports": [
+              {
+                "ContainerPort": "8090"
+              }
+            ]
+          }
+          EOF
           
           zip -r deploy/deploy.zip deploy/
 
