@@ -60,21 +60,7 @@ jobs:
           # Create deploy directory
           mkdir -p deploy
           
-          # Create dockerrun.aws.json file with ECR repository URI
-          cat <<EOL > deploy/Dockerrun.aws.json
-          {
-            "AWSEBDockerrunVersion": 2,
-            "Image": {
-              "Name": "${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}:latest"
-              "Update": "true"
-            },
-            "Ports": [
-              {
-                "ContainerPort": "8090"
-              }
-            ]
-          }
-          EOL
+          envsubst < Dockerrun.aws.json.template > deploy/Dockerrun.aws.json
           
           zip -r deploy/deploy.zip deploy/
 
