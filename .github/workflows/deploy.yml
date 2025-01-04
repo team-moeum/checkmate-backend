@@ -55,7 +55,7 @@ jobs:
     runs-on: self-hosted
     needs: LoginAndBuildImage
     steps:
-      - name: Create Dockerrun.aws.json
+      - name: Create docker-compose.yml
         run: |
           echo 'version: "3"
                 services:
@@ -70,7 +70,7 @@ jobs:
                       - /etc/localtime:/etc/localtime:ro
                       - /etc/timezone:/etc/timezone:ro
                       - /home/ubuntu/checkmate/applog:/app/logs
-                  ' > Dockerrun.aws.json
+                  ' > docker-compose.yml
 
       - name: Create .env file
         run: |
