@@ -58,7 +58,7 @@ jobs:
       - name: Create Dockerrun.aws.json
         run: |
           echo '{
-            "AWSEBDockerrunVersion": 1,
+            "AWSEBDockerrunVersion": 3,
             "Image": {
               "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest",
               "Update": "true"
