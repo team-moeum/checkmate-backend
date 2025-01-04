@@ -1,9 +1,23 @@
 {
-  "AWSEBDockerrunVersion": 2,
+  "AWSEBDockerrunVersion": 1,
   "Image": {
     "Name": "${ECR_REGISTRY}/${ECR_REPOSITORY}:latest",
     "Update": "true"
   },
+  "environment": [
+    {
+      "name": "DATABASE_URL",
+      "value": "${DATABASE_URL}"
+    },
+    {
+      "name": "DATABASE_USERNAME",
+      "value": "${DATABASE_USERNAME}"
+    },
+    {
+      "name": "DATABASE_PASSWORD",
+      "value": "${DATABASE_PASSWORD}"
+    }
+  ],
   "Ports": [
     {
       "ContainerPort": "8090"
