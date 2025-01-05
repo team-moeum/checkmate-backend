@@ -51,45 +51,51 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_ENV
 
-  BeanstalkDeploy:
-    runs-on: self-hosted
-    needs: LoginAndBuildImage
-    steps:
-      - name: Create docker-compose.yml
+      - name: deploy
+        id: deploy image
         run: |
-          cat <<EOF > docker-compose.yml
-                version: "3"
-                services:
-                  checkmate-backend:
-                    image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
-                    restart: unless-stopped
-                    network_mode: host
-                    env_file: ".env"
-                  
-          EOF
-          sed -i 's|\${ECR_REGISTRY}|'"${ECR_REGISTRY}"'|g' docker-compose.yml
-          sed -i 's|\${ECR_REPOSITORY}|'"${ECR_REPOSITORY}"'|g' docker-compose.yml
+            cd /home/ubuntu/checkmate
+            sudo docker compose up -d
 
-      - name: Create .env file
-        run: |
-          echo "DATABASE_URL=\${DATABASE_URL}" > .env
-          echo "DATABASE_USERNAME=\${DATABASE_USERNAME}" >> .env
-          echo "DATABASE_PASSWORD=\${DATABASE_PASSWORD}" >> .env
-
-      - name: Generate deployment package
-        run: |
-          mkdir -p deploy
-          cp docker-compose.yml deploy/docker-compose.yml
-          cd deploy && zip -r deploy.zip .
-
-      - name: Deploy to Elastic Beanstalk
-        uses: einaregilsson/beanstalk-deploy@v14
-        with:
-          aws_access_key: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws_secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
-          application_name: ${{ env.BEANSTALK_APP_NAME }}
-          environment_name: ${{ env.BEANSTALK_ENV_NAME }}
-          version_label: docker-${{ github.sha }}
-          region: ${{ env.AWS_REGION }}
-          deployment_package: deploy/deploy.zip
-          wait_for_environment_recovery: 60
+#  BeanstalkDeploy:
+#    runs-on: self-hosted
+#    needs: LoginAndBuildImage
+#    steps:
+#      - name: Create docker-compose.yml
+#        run: |
+#          cat <<EOF > docker-compose.yml
+#                version: "3"
+#                services:
+#                  checkmate-backend:
+#                    image: ${ECR_REGISTRY}/${ECR_REPOSITORY}:latest
+#                    restart: unless-stopped
+#                    network_mode: host
+#                    env_file: ".env"
+#
+#          EOF
+#          sed -i 's|\${ECR_REGISTRY}|'"${ECR_REGISTRY}"'|g' docker-compose.yml
+#          sed -i 's|\${ECR_REPOSITORY}|'"${ECR_REPOSITORY}"'|g' docker-compose.yml
+#
+#      - name: Create .env file
+#        run: |
+#          echo "DATABASE_URL=\${DATABASE_URL}" > .env
+#          echo "DATABASE_USERNAME=\${DATABASE_USERNAME}" >> .env
+#          echo "DATABASE_PASSWORD=\${DATABASE_PASSWORD}" >> .env
+#
+#      - name: Generate deployment package
+#        run: |
+#          mkdir -p deploy
+#          cp docker-compose.yml deploy/docker-compose.yml
+#          cd deploy && zip -r deploy.zip .
+#
+#      - name: Deploy to Elastic Beanstalk
+#        uses: einaregilsson/beanstalk-deploy@v14
+#        with:
+#          aws_access_key: ${{ env.AWS_ACCESS_KEY_ID }}
+#          aws_secret_key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+#          application_name: ${{ env.BEANSTALK_APP_NAME }}
+#          environment_name: ${{ env.BEANSTALK_ENV_NAME }}
+#          version_label: docker-${{ github.sha }}
+#          region: ${{ env.AWS_REGION }}
+#          deployment_package: deploy/deploy.zip
+#          wait_for_environment_recovery: 60
