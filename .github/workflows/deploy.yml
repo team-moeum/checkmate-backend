@@ -52,10 +52,9 @@ jobs:
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:latest" >> $GITHUB_ENV
 
       - name: deploy
-        id: deploy image
         run: |
-            cd /home/ubuntu/checkmate
-            sudo docker compose up -d
+          cd /home/ubuntu/checkmate
+          sudo docker compose up -d
 
 #  BeanstalkDeploy:
 #    runs-on: self-hosted
