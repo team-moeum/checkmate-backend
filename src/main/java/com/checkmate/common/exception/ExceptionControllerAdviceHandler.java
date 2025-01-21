@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 @Slf4j
-public class ExcExceptionControllerAdviceptionHandler {
+public class ExceptionControllerAdviceHandler {
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ApiResponse<?>> handleNotFoundException(EntityNotFoundException e) {
