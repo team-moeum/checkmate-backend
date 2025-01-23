@@ -2,6 +2,7 @@ package com.checkmate.member.domain;
 
 
 import com.checkmate.common.domain.BaseEntity;
+import com.checkmate.todo.domain.ToDo;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +14,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -46,5 +48,8 @@ public class Member extends BaseEntity {
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<ToDo> todos = new ArrayList<>();
 
-
+    @Builder
+    public Member(String token) {
+        this.token = token;
+    }
 }

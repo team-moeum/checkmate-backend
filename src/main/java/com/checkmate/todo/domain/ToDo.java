@@ -1,5 +1,6 @@
-package com.checkmate.member.domain;
+package com.checkmate.todo.domain;
 
+import com.checkmate.member.domain.Member;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +14,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Temporal;
 import jakarta.persistence.TemporalType;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -49,4 +51,15 @@ public class ToDo {
 
     @Temporal(TemporalType.DATE)
     private Date endedDate; // 종료일
+
+    @Builder
+    public ToDo(String title, Boolean isCompleted, int stat, Member member, Set<DayOfWeek> cycle, Date startedDate, Date endedDate) {
+        this.title = title;
+        this.isCompleted = isCompleted;
+        this.stat = stat;
+        this.member = member;
+        this.cycle = cycle;
+        this.startedDate = startedDate;
+        this.endedDate = endedDate;
+    }
 }
